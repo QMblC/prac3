@@ -11,10 +11,10 @@ fun NavigationBar(navController: NavHostController) {
         navController = navController,
         startDestination = "films")
     {
-        composable("films") { FilmsScreen(navController)  }
+        composable("films") { ListScreen(navController)  }
         composable("filmDetail/{movieId}") {  x ->
             val movieId = x.arguments?.getString("movieId")?.toInt() ?: 0
-            FilmDetailsScreen(navController, movieId)
+            DetailsScreen(navController, movieId)
         }
         composable("profile") { ProfileScreen() }
     }

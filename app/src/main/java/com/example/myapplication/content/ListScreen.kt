@@ -20,7 +20,7 @@ import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilmsScreen(navigation: NavHostController) {
+fun ListScreen(navigation: NavHostController) {
     val viewModel = koinViewModel<ListViewModel> { parametersOf(navigation) }
 
     Scaffold(

@@ -14,17 +14,46 @@ class DetailsViewModel(
     private val id: Int
 ) : ViewModel() {
 
-    val mutableState = MutableDetailsState()
+    val uiState = mutableStateOf<MovieDetailsUI?>(null)
 
     init {
-        mutableState.movie = repository.getMovie(id)
+        repository.getMovie(id)?.let {
+            uiState.value = MovieDetailsUI.from(it)
+        }
     }
 
     fun back() {
         navigation.popBackStack()
     }
+}
 
-    class MutableDetailsState {
-        var movie: Movie? by mutableStateOf(null)
+data class MovieDetailsUI(
+    val name: String,
+    val plot: String,
+    val posterImageURL: String,
+    val details: List<Pair<String, String>>,
+    val cast: List<PersonUI>
+) {
+    companion object {
+        fun from(movie: Movie): MovieDetailsUI {
+            return MovieDetailsUI(
+                name = movie.name,
+                plot = movie.plot,
+                posterImageURL = movie.posterImageURL,
+                details = listOf(
+                    "Premier year" to movie.premierYear.toString(),
+                    "Rating" to movie.rating.aggregateRating.toString(),
+                    "Genres" to movie.genres.joinToString(", "),
+                    "Countries" to movie.countries.joinToString(", ")
+                ),
+                cast = movie.people.map { PersonUI(it.name, it.characters.joinToString(", "), it.photoURL) }
+            )
+        }
     }
 }
+
+data class PersonUI(
+    val name: String,
+    val role: String,
+    val photoURL: String
+)

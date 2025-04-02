@@ -7,15 +7,19 @@ import com.example.myapplication.model.Movie
 
 class ListViewModel(
     private val repository: MovieRepository,
-    private val navigation: NavHostController
+    private val navigation: NavHostController,
+    private var movies: List<Movie> = emptyList()
 ) : ViewModel() {
 
     init {
-        loadMovies()
+        movies = loadMovies()
     }
 
     fun loadMovies(): List<Movie> {
-        return repository.getList()
+        if (movies.isEmpty())
+            return repository.getList()
+        else
+            return movies
     }
 
     fun onItemClicked(id: Int) {
