@@ -1,7 +1,7 @@
 package com.example.myapplication.model
 
 class Person (
-    val photoURL: String,
+    val photo: String,
     val name: String,
-    val characters: List<String>
+    val profession: String
 )

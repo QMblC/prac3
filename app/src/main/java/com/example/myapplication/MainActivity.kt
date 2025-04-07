@@ -13,13 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.content.MainActivityScreen
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import org.koin.androidx.compose.KoinAndroidContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MainActivityScreen()
+            KoinAndroidContext {
+                MainActivityScreen()
+            }
         }
     }
 }
