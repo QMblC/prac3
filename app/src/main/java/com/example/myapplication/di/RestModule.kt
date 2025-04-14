@@ -34,7 +34,7 @@ fun provideRetrofit(context: Context): Retrofit {
                     chain.proceed(
                         request.newBuilder()
                             .url(url)
-                            .addHeader("X-API-KEY", "A42JWBC-JXZ439Q-M9C2C15-9W9FPFR")
+                            .addHeader("X-API-KEY", "KW79Y49-4NZ46JV-PYV9D9F-7RWHB5W")
                             .build()
                     )
                 }.intercept(it)

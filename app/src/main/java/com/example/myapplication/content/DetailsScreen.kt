@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.myapplication.model.Movie
-import com.example.myapplication.model.Rating
+import com.example.myapplication.model.MovieAttributes.Rating
 import com.example.myapplication.view.DetailsViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -97,7 +97,12 @@ private fun MovieScreenContent(
                 RatingDisplay(movie.rating)
 
                 Spacer(modifier = Modifier.height(16.dp))
-                InfoSection("Жанры", movie.genres)
+                movie.genres.forEach { genre ->
+                    Text(
+                        text = genre.displayName,
+                        modifier = Modifier.padding(horizontal = 14.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(12.dp))
                 InfoSection("Страны выхода", movie.countries)
                 Spacer(modifier = Modifier.height(24.dp))
@@ -127,7 +132,7 @@ private fun MovieScreenContent(
                 }
             }
             item {
-                Spacer(modifier = Modifier.height(100.dp)) // Добавлен спейсер
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }

@@ -9,7 +9,9 @@ import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -29,7 +31,8 @@ fun MainActivityScreen() {
     val navController = rememberNavController()
     val items = listOf(
         NavigationBarItemData("films", Icons.AutoMirrored.Filled.List, "Список фильмов"),
-        NavigationBarItemData("profile", Icons.Rounded.AccountCircle, "Мой профиль")
+        NavigationBarItemData("profile", Icons.Rounded.AccountCircle, "Мой профиль"),
+        NavigationBarItemData("favorites", Icons.Rounded.Favorite, "Мои фильмы")
     )
 
     Scaffold(
@@ -50,7 +53,6 @@ fun BottomNavigationBar(navController: NavController, items: List<NavigationBarI
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
-
             BottomNavigationItem(
                 icon = {
                     Icon(
@@ -75,6 +77,7 @@ fun BottomNavigationBar(navController: NavController, items: List<NavigationBarI
                     }
                 }
             )
+
         }
     }
 }

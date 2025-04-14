@@ -22,7 +22,6 @@ class DetailsViewModel(
     private val id: Int
 ) : ViewModel() {
 
-    val uiState = mutableStateOf<MovieDetailsUI?>(null)
     val viewState = MutableDetailsState()
 
     init {
@@ -30,7 +29,6 @@ class DetailsViewModel(
             handleError = { viewState.error = it.localizedMessage },
             updateLoading = { viewState.isLoading = it }
         ) {
-            Log.e("DEBUG", "$id")
             viewState.movie = repository.getById(id)
             viewState.movie?.name?.let {
                 launch { viewState.related = repository.getList(it).take(3) }
@@ -51,34 +49,3 @@ class MutableDetailsState : MovieDetailState {
     override var error: String? by mutableStateOf(null)
     override var related: List<MovieShort> by mutableStateOf(emptyList())
 }
-
-data class MovieDetailsUI(
-    val name: String,
-    val plot: String,
-    val posterImageURL: String,
-    val details: List<Pair<String, String>>,
-    val cast: List<PersonUI>
-) {
-    companion object {
-        fun from(movie: Movie): MovieDetailsUI {
-            return MovieDetailsUI(
-                name = movie.name,
-                plot = movie.plot,
-                posterImageURL = movie.posterImageURL,
-                details = listOf(
-                    "Premier year" to movie.premierYear.toString(),
-                    "Rating" to movie.rating.imdb.toString(),
-                    "Genres" to movie.genres.joinToString(", "),
-                    "Countries" to movie.countries.joinToString(", ")
-                ),
-                cast = movie.people.map { PersonUI(it.name, it.profession, it.photo) }
-            )
-        }
-    }
-}
-
-data class PersonUI(
-    val name: String,
-    val role: String,
-    val photoURL: String
-)

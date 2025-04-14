@@ -1,16 +1,20 @@
 package com.example.myapplication.api
 
+import com.example.myapplication.model.Genre
 import com.example.myapplication.model.Movie
 import com.example.myapplication.model.MovieFullResponse
 import com.example.myapplication.model.MovieShort
 import com.example.myapplication.model.MovieShortResponse
 import com.example.myapplication.model.MoviesSearchResponse
-import com.example.myapplication.model.Person
-import com.example.myapplication.model.Rating
+import com.example.myapplication.model.MovieAttributes.Person
+import com.example.myapplication.model.MovieAttributes.Rating
+import com.example.myapplication.model.MovieType
 
 class MovieMapper {
     fun toDomain(response: MovieFullResponse): Movie? {
-        if (response.id == null || response.name == null) return null
+        if (response.id == null
+            || response.name.isNullOrBlank()
+        ) return null
 
         return Movie(
             id = response.id.or(0),
@@ -19,8 +23,11 @@ class MovieMapper {
             plot = response.description.orEmpty(),
             premierYear = response.premiere?.world ?: "",
             posterImageURL = response.poster?.url ?: "",
-            genres = response.genres?.map {it.name} ?: emptyList(),
-            countries = response.countries?.map { it.name } ?: emptyList(),
+            genres = response.genres?.map { genre -> Genre.getGenreByName(genre.name) }
+                ?: emptyList(),
+            countries = response.countries?.map { country -> country.name } ?: emptyList(),
+            type = MovieType.getMovieTypeByCode(response.type),
+
             people = response.persons
                 ?.take(5)
                 ?.map {
@@ -38,10 +45,16 @@ class MovieMapper {
         return MovieShort(
             id = response.id ?: 0,
             name = response.name.orEmpty(),
+            type = response.type.orEmpty(),
+            genres = response.genres?.map { genre -> Genre.getGenreByName(genre.name) }
+                ?: emptyList(),
             posterImageURL = response.poster.url ?: ""
         )
     }
 
-    fun toDomainList(response: MoviesSearchResponse) =
-        response.search?.map { movie -> toDomain(movie) }.orEmpty()
+    fun toDomainList(response: List<MovieShortResponse>) =
+        response.filter { movie -> movie.id != null && !movie.name.isNullOrBlank() }
+            .map { movie ->
+                toDomain(movie)
+            }
 }

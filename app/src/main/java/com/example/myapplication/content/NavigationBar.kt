@@ -17,5 +17,6 @@ fun NavigationBar(navController: NavHostController) {
             DetailsScreen(navController, movieId)
         }
         composable("profile") { ProfileScreen() }
+        composable("favorites") { FavoritesScreen(navController)}
     }
 }
