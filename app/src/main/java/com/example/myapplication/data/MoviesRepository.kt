@@ -1,10 +1,9 @@
 package com.example.myapplication.data
 
-import android.util.Log
 import com.example.myapplication.api.MovieApi
 import com.example.myapplication.api.MovieMapper
+import com.example.myapplication.data.Entity.MovieDatabaseEntity
 import com.example.myapplication.model.Genre
-import com.example.myapplication.model.MovieAttributes.Poster
 import com.example.myapplication.model.MovieShort
 import com.example.myapplication.model.MovieType
 import kotlinx.coroutines.Dispatchers

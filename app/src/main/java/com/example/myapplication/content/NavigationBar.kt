@@ -16,7 +16,8 @@ fun NavigationBar(navController: NavHostController) {
             val movieId = x.arguments?.getString("movieId")?.toInt() ?: 0
             DetailsScreen(navController, movieId)
         }
-        composable("profile") { ProfileScreen() }
+        composable("profile") { ProfileScreen(navController) }
         composable("favorites") { FavoritesScreen(navController)}
+        composable("edit_profile") { EditProfileScreen(navController)}
     }
 }
