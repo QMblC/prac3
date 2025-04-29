@@ -1,0 +1,170 @@
+package com.example.myapplication.view
+
+
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Environment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.core.net.toUri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
+import com.example.myapplication.data.ProfileRepository
+import com.example.myapplication.model.Profile
+import com.example.myapplication.state.MutableProfileState
+import com.example.myapplication.state.ProfileState
+import com.example.myapplication.utilities.launchLoadingAndError
+import org.koin.java.KoinJavaComponent
+import java.io.File
+import java.util.Date
+
+class ProfileViewModel(
+    private val repository: ProfileRepository,
+    private val navigation: NavHostController,
+    private val mutableState: MutableProfileState
+) : ViewModel() {
+
+
+    val viewState = mutableState as ProfileState
+    private val context: Context by KoinJavaComponent.inject(Context::class.java)
+
+    init {
+        loadProfile()
+    }
+
+    fun onDocumentClick() {
+        if (viewState.resumeUrl.isBlank()) {
+            mutableState.error = "URL резюме не указан"
+            return
+        }
+        try {
+            downloadDocument(context, viewState.resumeUrl)
+        } catch (e: Exception) {
+            mutableState.error = "Ошибка при загрузке документа: ${e.message}"
+        }
+    }
+
+    private fun downloadDocument(context: Context, url: String) {
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(url.toUri())
+
+        val fileExtension = url.substringAfterLast('.', "pdf")
+        val filename = "resume_${Date().time}.$fileExtension"
+
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        request.setTitle("Загрузка резюме")
+        request.setDescription("Загрузка файла резюме")
+
+        val downloadId = downloadManager.enqueue(request)
+        val onComplete: BroadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                if (id == downloadId) {
+                    try {
+                        onDownloadComplete(context, filename)
+                    } catch (e: Exception) {
+                        mutableState.error = "Ошибка при открытии документа: ${e.message}"
+                    } finally {
+                        context.unregisterReceiver(this)
+                    }
+                }
+            }
+        }
+
+        ContextCompat.registerReceiver(
+            context,
+            onComplete,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            ContextCompat.RECEIVER_EXPORTED
+        )
+    }
+
+    private fun onDownloadComplete(context: Context, filename: String) {
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            filename
+        )
+
+        if (!file.exists()) {
+            throw IllegalStateException("Файл не найден")
+        }
+
+        val mimeType = getMimeType(filename)
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        val resolveInfo = context.packageManager.queryIntentActivities(intent, 0)
+        if (resolveInfo.isNotEmpty()) {
+            context.startActivity(intent)
+        } else {
+            val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "*/*")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (fallbackIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(fallbackIntent)
+            } else {
+                throw IllegalStateException("Нет приложения для открытия файла")
+            }
+        }
+    }
+
+    private fun getMimeType(filename: String): String {
+        return when (filename.substringAfterLast('.').lowercase()) {
+            "pdf" -> "application/pdf"
+            "doc" -> "application/msword"
+            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "txt" -> "text/plain"
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            else -> "application/octet-stream"
+        }
+    }
+
+    private fun loadProfile() {
+        viewModelScope.launchLoadingAndError(
+            handleError = { mutableState.error = it.localizedMessage },
+            updateLoading = { mutableState.isLoading = it }
+        ) {
+            repository.getProfile()?.let { profile ->
+                updateState(profile)
+            }
+        }
+    }
+
+    fun onSaveProfile(profile: Profile) {
+        viewModelScope.launchLoadingAndError(
+            handleError = { mutableState.error = it.localizedMessage },
+            updateLoading = { mutableState.isLoading = it }
+        ) {
+            val profileSaved = repository.setProfile(profile = profile)
+            updateState(profileSaved)
+        }
+    }
+
+    private fun updateState(profile: Profile) {
+        mutableState.fullName = profile.fullName
+        mutableState.avatarUri = profile.avatarUri
+        mutableState.resumeUrl = profile.resumeUrl
+        mutableState.position = profile.position
+        mutableState.email = profile.email
+    }
+}
