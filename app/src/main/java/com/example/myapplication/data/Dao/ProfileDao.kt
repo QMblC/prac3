@@ -14,6 +14,6 @@ interface ProfileDao {
     suspend fun insert(driverDbEntity: ProfileDatabaseEntity)
 
 
-    @Query("UPDATE ProfileDatabaseEntity SET profileFullName = :fullName, profileAvatar = :avatarUri, profileResume = :resumeUrl, profilePosition = :position, profileEmail = :email")
-    suspend fun update(fullName: String?, avatarUri: String?, resumeUrl: String?, position: String?, email: String?)
+    @Query("UPDATE ProfileDatabaseEntity SET profileFullName = :fullName, profileAvatar = :avatarUri, profileResume = :resumeUrl, profilePosition = :position, profileEmail = :email, profileFavouriteLessonTime = :favouriteLessonTime")
+    suspend fun update(fullName: String?, avatarUri: String?, resumeUrl: String?, position: String?, email: String?, favouriteLessonTime: String?)
 }

@@ -19,7 +19,8 @@ class ProfileRepository(
                 avatarUri = profile.avatarUri,
                 resumeUrl = profile.resumeUrl,
                 position = profile.position,
-                email = profile.email
+                email = profile.email,
+                favouriteLessonTime = profile.favouriteLessonTime
             )
             db.profileDao().insert(profileEntity)
         } else {
@@ -28,7 +29,8 @@ class ProfileRepository(
                 avatarUri = profile.avatarUri,
                 resumeUrl = profile.resumeUrl,
                 position = profile.position,
-                email = profile.email
+                email = profile.email,
+                favouriteLessonTime = profile.favouriteLessonTime
             )
         }
         return profile
@@ -46,7 +48,8 @@ class ProfileRepository(
             avatarUri = avatarUri ?: "",
             resumeUrl = resumeUrl ?: "",
             position = position ?: "",
-            email = email ?: ""
+            email = email ?: "",
+            favouriteLessonTime = favouriteLessonTime ?: ""
         )
     }
 }

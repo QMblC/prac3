@@ -1,12 +1,16 @@
 package com.example.myapplication.view
 
 
+import android.app.AlarmManager
 import android.app.DownloadManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Environment
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -20,9 +24,12 @@ import com.example.myapplication.data.ProfileRepository
 import com.example.myapplication.model.Profile
 import com.example.myapplication.state.MutableProfileState
 import com.example.myapplication.state.ProfileState
+import com.example.myapplication.utilities.Notification
+import com.example.myapplication.utilities.NotificationReceiver
 import com.example.myapplication.utilities.launchLoadingAndError
 import org.koin.java.KoinJavaComponent
 import java.io.File
+import java.util.Calendar
 import java.util.Date
 
 class ProfileViewModel(
@@ -157,6 +164,74 @@ class ProfileViewModel(
         ) {
             val profileSaved = repository.setProfile(profile = profile)
             updateState(profileSaved)
+
+            if (profile.favouriteLessonTime.isNotEmpty()) {
+                scheduleClassNotification(profile.favouriteLessonTime, profile.fullName)
+            }
+        }
+    }
+
+    private fun scheduleClassNotification(time: String, name: String) {
+        try {
+            if (!Notification.hasNotificationPermission(context)) {
+                mutableState.error = "Требуется разрешение на отправку уведомлений"
+                return
+            }
+
+            if (!Notification.areNotificationsEnabled(context)) {
+                mutableState.error = "Уведомления отключены в настройках системы"
+                return
+            }
+
+            val alarmMgr = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val (hour, minute) = time.split(":").map { it.toInt() }
+
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                if (before(Calendar.getInstance())) {
+                    add(Calendar.DATE, 1)
+                }
+            }
+
+            val intent = Intent(context, NotificationReceiver::class.java).apply {
+                putExtra("profile_name", name)
+                action = "com.example.androidpractice.NOTIFICATION"
+            }
+
+            val pi = PendingIntent.getBroadcast(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!alarmMgr.canScheduleExactAlarms()) {
+                    Log.w("ProfileViewModel", "Cannot schedule exact alarms, using setAndAllowWhileIdle")
+                    alarmMgr.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        cal.timeInMillis,
+                        pi
+                    )
+                } else {
+                    alarmMgr.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        cal.timeInMillis,
+                        pi
+                    )
+                }
+            } else {
+                alarmMgr.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    cal.timeInMillis,
+                    pi
+                )
+            }
+
+            Log.d("ProfileViewModel", "Notification scheduled for ${cal.time}")
+        } catch (e: Exception) {
+            Log.e("ProfileViewModel", "Error scheduling notification", e)
+            mutableState.error = "Ошибка при установке уведомления: ${e.message}"
         }
     }
 
@@ -166,5 +241,6 @@ class ProfileViewModel(
         mutableState.resumeUrl = profile.resumeUrl
         mutableState.position = profile.position
         mutableState.email = profile.email
+        mutableState.favouriteLessonTime = profile.favouriteLessonTime
     }
 }
